@@ -25,9 +25,7 @@ class _CalculatorAppState extends State<CalculatorApp> {
       );
 
   void _toggleTheme() {
-    setState(() {
-      _isDark = !_isDark;
-    });
+    setState(() => _isDark = !_isDark);
   }
 
   @override
@@ -59,17 +57,30 @@ class CalculatorScreen extends StatefulWidget {
 }
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
-  String _display = '0';
+  String _display = '0';     // Big number/result
+  String _expression = '';   // Small "123 +" line
 
   String _currentInput = '';
   double? _firstOperand;
-  String? _operator;
+  String? _operator; // '+', '-', '*', '/'
 
   bool _isError = false;
+
+  String _prettyOp(String op) {
+    switch (op) {
+      case '/':
+        return '÷';
+      case '*':
+        return '×';
+      default:
+        return op;
+    }
+  }
 
   void _setError(String message) {
     setState(() {
       _display = message;
+      _expression = '';
       _currentInput = '';
       _firstOperand = null;
       _operator = null;
@@ -80,6 +91,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   void _resetAll() {
     setState(() {
       _display = '0';
+      _expression = '';
       _currentInput = '';
       _firstOperand = null;
       _operator = null;
@@ -92,6 +104,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       _currentInput = '';
       _display = '0';
       _isError = false;
+      // Keep expression so student can continue the operation after clearing second operand
     });
   }
 
@@ -106,7 +119,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   void _onNumberPress(String digit) {
     setState(() {
       if (_isError) {
+        // Typing after an error starts fresh
         _isError = false;
+        _expression = '';
+        _firstOperand = null;
+        _operator = null;
         _currentInput = '';
         _display = '0';
       }
@@ -116,6 +133,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       } else {
         _currentInput += digit;
       }
+
       _display = _currentInput.isEmpty ? '0' : _currentInput;
     });
   }
@@ -140,8 +158,16 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     setState(() {
       _firstOperand = parsed;
       _operator = op;
+
+      // Show "123 +" in small line
+      _expression = '${_formatNumber(parsed)} ${_prettyOp(op)}';
+
+      // Clear current input so user can type second operand
       _currentInput = '';
-      _display = '0';
+
+      // IMPORTANT FIX: do NOT force the big display to 0 here.
+      // Instead, keep showing the first operand until they start typing the second.
+      _display = _formatNumber(parsed);
     });
   }
 
@@ -187,16 +213,30 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
 
     setState(() {
-      if (result == result.roundToDouble()) {
-        _display = result.toInt().toString();
-      } else {
-        _display = result.toString();
-      }
+      // Optional: show full expression briefly in small line
+      _expression =
+          '${_formatNumber(_firstOperand!)} ${_prettyOp(_operator!)} ${_formatNumber(secondOperand)} =';
+
+      _display = _formatNumber(result);
+
+      // allow continuing from result
       _currentInput = _display;
       _firstOperand = null;
       _operator = null;
       _isError = false;
     });
+  }
+
+  String _formatNumber(double value) {
+    if (value == value.roundToDouble()) return value.toInt().toString();
+
+    // Clean up trailing zeros a bit without being too fancy
+    var s = value.toString();
+    if (s.contains('.')) {
+      while (s.endsWith('0')) s = s.substring(0, s.length - 1);
+      if (s.endsWith('.')) s = s.substring(0, s.length - 1);
+    }
+    return s;
   }
 
   Widget _calcButton({
@@ -210,6 +250,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 18),
           textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         ),
         child: Text(label),
       ),
@@ -262,19 +303,35 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Display area
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
               alignment: Alignment.centerRight,
-              child: Text(
-                _display,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w600,
-                  color: _isError ? Colors.red : null,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _expression,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _display,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w600,
+                      color: _isError ? Colors.red : null,
+                    ),
+                  ),
+                ],
               ),
             ),
             const Divider(height: 1),
