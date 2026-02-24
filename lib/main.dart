@@ -54,6 +54,44 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     });
   }
 
+  void _onEqualsPress() {
+    if (_firstOperand == null || _operator == null || _currentInput.isEmpty) return;
+
+    final secondOperand = double.tryParse(_currentInput);
+    if (secondOperand == null) return;
+
+    double result;
+    switch (_operator) {
+      case '+':
+        result = _firstOperand! + secondOperand;
+        break;
+      case '-':
+        result = _firstOperand! - secondOperand;
+        break;
+      case '*':
+        result = _firstOperand! * secondOperand;
+        break;
+      case '/':
+        result = _firstOperand! / secondOperand;
+        break;
+      default:
+        return;
+    }
+
+    setState(() {
+      if (result == result.roundToDouble()) {
+        _display = result.toInt().toString();
+      } else {
+        _display = result.toString();
+      }
+
+      // allow continuing from result
+      _currentInput = _display;
+      _firstOperand = null;
+      _operator = null;
+    });
+  }
+
   Widget _calcButton({
     required String label,
     required VoidCallback onTap,
@@ -90,9 +128,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       _calcButton(label: '-', onTap: () => _onOperatorPress('-')),
 
       _calcButton(label: '0', onTap: () => _onNumberPress('0')),
-      const SizedBox.shrink(),
-      const SizedBox.shrink(),
+      _calcButton(label: '=', onTap: _onEqualsPress),
       _calcButton(label: '+', onTap: () => _onOperatorPress('+')),
+      const SizedBox.shrink(),
     ];
 
     return Scaffold(
