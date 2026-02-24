@@ -27,7 +27,10 @@ class CalculatorScreen extends StatefulWidget {
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
   String _display = '0';
+
   String _currentInput = '';
+  double? _firstOperand;
+  String? _operator; // '+', '-', '*', '/'
 
   void _onNumberPress(String digit) {
     setState(() {
@@ -37,6 +40,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _currentInput += digit;
       }
       _display = _currentInput.isEmpty ? '0' : _currentInput;
+    });
+  }
+
+  void _onOperatorPress(String op) {
+    if (_currentInput.isEmpty) return;
+
+    setState(() {
+      _firstOperand = double.tryParse(_currentInput);
+      _operator = op;
+      _currentInput = '';
+      _display = '0';
     });
   }
 
@@ -63,22 +77,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       _calcButton(label: '7', onTap: () => _onNumberPress('7')),
       _calcButton(label: '8', onTap: () => _onNumberPress('8')),
       _calcButton(label: '9', onTap: () => _onNumberPress('9')),
-      const SizedBox.shrink(),
+      _calcButton(label: '÷', onTap: () => _onOperatorPress('/')),
 
       _calcButton(label: '4', onTap: () => _onNumberPress('4')),
       _calcButton(label: '5', onTap: () => _onNumberPress('5')),
       _calcButton(label: '6', onTap: () => _onNumberPress('6')),
-      const SizedBox.shrink(),
+      _calcButton(label: '×', onTap: () => _onOperatorPress('*')),
 
       _calcButton(label: '1', onTap: () => _onNumberPress('1')),
       _calcButton(label: '2', onTap: () => _onNumberPress('2')),
       _calcButton(label: '3', onTap: () => _onNumberPress('3')),
-      const SizedBox.shrink(),
+      _calcButton(label: '-', onTap: () => _onOperatorPress('-')),
 
       _calcButton(label: '0', onTap: () => _onNumberPress('0')),
       const SizedBox.shrink(),
       const SizedBox.shrink(),
-      const SizedBox.shrink(),
+      _calcButton(label: '+', onTap: () => _onOperatorPress('+')),
     ];
 
     return Scaffold(
