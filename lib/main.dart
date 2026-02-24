@@ -32,6 +32,32 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   double? _firstOperand;
   String? _operator; // '+', '-', '*', '/'
 
+  void _resetAll() {
+    setState(() {
+      _display = '0';
+      _currentInput = '';
+      _firstOperand = null;
+      _operator = null;
+    });
+  }
+
+  void _clearCurrent() {
+    setState(() {
+      _currentInput = '';
+      _display = '0';
+    });
+  }
+
+  void _onClearPress() {
+    // If currently typing, clear only that.
+    // If not typing, reset everything (AC behavior).
+    if (_currentInput.isNotEmpty) {
+      _clearCurrent();
+    } else {
+      _resetAll();
+    }
+  }
+
   void _onNumberPress(String digit) {
     setState(() {
       if (_currentInput == '0') {
@@ -84,8 +110,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       } else {
         _display = result.toString();
       }
-
-      // allow continuing from result
       _currentInput = _display;
       _firstOperand = null;
       _operator = null;
@@ -112,24 +136,29 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   @override
   Widget build(BuildContext context) {
     final buttons = <Widget>[
+      _calcButton(label: 'C/AC', onTap: _onClearPress),
+      const SizedBox.shrink(),
+      const SizedBox.shrink(),
+      _calcButton(label: '÷', onTap: () => _onOperatorPress('/')),
+
       _calcButton(label: '7', onTap: () => _onNumberPress('7')),
       _calcButton(label: '8', onTap: () => _onNumberPress('8')),
       _calcButton(label: '9', onTap: () => _onNumberPress('9')),
-      _calcButton(label: '÷', onTap: () => _onOperatorPress('/')),
+      _calcButton(label: '×', onTap: () => _onOperatorPress('*')),
 
       _calcButton(label: '4', onTap: () => _onNumberPress('4')),
       _calcButton(label: '5', onTap: () => _onNumberPress('5')),
       _calcButton(label: '6', onTap: () => _onNumberPress('6')),
-      _calcButton(label: '×', onTap: () => _onOperatorPress('*')),
+      _calcButton(label: '-', onTap: () => _onOperatorPress('-')),
 
       _calcButton(label: '1', onTap: () => _onNumberPress('1')),
       _calcButton(label: '2', onTap: () => _onNumberPress('2')),
       _calcButton(label: '3', onTap: () => _onNumberPress('3')),
-      _calcButton(label: '-', onTap: () => _onOperatorPress('-')),
+      _calcButton(label: '+', onTap: () => _onOperatorPress('+')),
 
       _calcButton(label: '0', onTap: () => _onNumberPress('0')),
       _calcButton(label: '=', onTap: _onEqualsPress),
-      _calcButton(label: '+', onTap: () => _onOperatorPress('+')),
+      const SizedBox.shrink(),
       const SizedBox.shrink(),
     ];
 
