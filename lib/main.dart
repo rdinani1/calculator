@@ -30,7 +30,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   String _currentInput = '';
   double? _firstOperand;
-  String? _operator; // '+', '-', '*', '/'
+  String? _operator;
+
+  bool _isError = false;
+
+  void _setError(String message) {
+    setState(() {
+      _display = message;
+      _currentInput = '';
+      _firstOperand = null;
+      _operator = null;
+      _isError = true;
+    });
+  }
 
   void _resetAll() {
     setState(() {
@@ -38,6 +50,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       _currentInput = '';
       _firstOperand = null;
       _operator = null;
+      _isError = false;
     });
   }
 
@@ -45,12 +58,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     setState(() {
       _currentInput = '';
       _display = '0';
+      _isError = false;
     });
   }
 
   void _onClearPress() {
-    // If currently typing, clear only that.
-    // If not typing, reset everything (AC behavior).
     if (_currentInput.isNotEmpty) {
       _clearCurrent();
     } else {
@@ -60,6 +72,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   void _onNumberPress(String digit) {
     setState(() {
+      if (_isError) {
+        _isError = false;
+        _currentInput = '';
+        _display = '0';
+      }
+
       if (_currentInput == '0') {
         _currentInput = digit;
       } else {
@@ -70,10 +88,24 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _onOperatorPress(String op) {
-    if (_currentInput.isEmpty) return;
+    if (_isError) {
+      _setError('Error: clear first');
+      return;
+    }
+
+    if (_currentInput.isEmpty) {
+      _setError('Error: no input');
+      return;
+    }
+
+    final parsed = double.tryParse(_currentInput);
+    if (parsed == null) {
+      _setError('Error: invalid number');
+      return;
+    }
 
     setState(() {
-      _firstOperand = double.tryParse(_currentInput);
+      _firstOperand = parsed;
       _operator = op;
       _currentInput = '';
       _display = '0';
@@ -81,10 +113,26 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _onEqualsPress() {
-    if (_firstOperand == null || _operator == null || _currentInput.isEmpty) return;
+    if (_isError) {
+      _setError('Error: clear first');
+      return;
+    }
+
+    if (_firstOperand == null || _operator == null || _currentInput.isEmpty) {
+      _setError('Error: incomplete');
+      return;
+    }
 
     final secondOperand = double.tryParse(_currentInput);
-    if (secondOperand == null) return;
+    if (secondOperand == null) {
+      _setError('Error: invalid number');
+      return;
+    }
+
+    if (_operator == '/' && secondOperand == 0) {
+      _setError('Error: /0');
+      return;
+    }
 
     double result;
     switch (_operator) {
@@ -101,6 +149,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         result = _firstOperand! / secondOperand;
         break;
       default:
+        _setError('Error: bad op');
         return;
     }
 
@@ -113,6 +162,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       _currentInput = _display;
       _firstOperand = null;
       _operator = null;
+      _isError = false;
     });
   }
 
@@ -178,7 +228,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 _display,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w600,
+                  color: _isError ? Colors.red : null,
+                ),
               ),
             ),
             const Divider(height: 1),
