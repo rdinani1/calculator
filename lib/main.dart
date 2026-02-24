@@ -4,22 +4,55 @@ void main() {
   runApp(const CalculatorApp());
 }
 
-class CalculatorApp extends StatelessWidget {
+class CalculatorApp extends StatefulWidget {
   const CalculatorApp({super.key});
+
+  @override
+  State<CalculatorApp> createState() => _CalculatorAppState();
+}
+
+class _CalculatorAppState extends State<CalculatorApp> {
+  bool _isDark = false;
+
+  ThemeData get _lightTheme => ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+      );
+
+  ThemeData get _darkTheme => ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+      );
+
+  void _toggleTheme() {
+    setState(() {
+      _isDark = !_isDark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Calculator',
-      theme: ThemeData(useMaterial3: true),
-      home: const CalculatorScreen(),
+      theme: _isDark ? _darkTheme : _lightTheme,
+      home: CalculatorScreen(
+        isDark: _isDark,
+        onToggleTheme: _toggleTheme,
+      ),
     );
   }
 }
 
 class CalculatorScreen extends StatefulWidget {
-  const CalculatorScreen({super.key});
+  final bool isDark;
+  final VoidCallback onToggleTheme;
+
+  const CalculatorScreen({
+    super.key,
+    required this.isDark,
+    required this.onToggleTheme,
+  });
 
   @override
   State<CalculatorScreen> createState() => _CalculatorScreenState();
@@ -185,6 +218,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final icon = widget.isDark ? Icons.dark_mode : Icons.light_mode;
+
     final buttons = <Widget>[
       _calcButton(label: 'C/AC', onTap: _onClearPress),
       const SizedBox.shrink(),
@@ -216,6 +251,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       appBar: AppBar(
         title: const Text('Calculator'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Toggle theme',
+            onPressed: widget.onToggleTheme,
+            icon: Icon(icon),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
